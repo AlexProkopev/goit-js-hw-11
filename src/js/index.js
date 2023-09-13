@@ -13,16 +13,19 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 export let currentValue = '';
 let page = 0;
 
+// Добавление слушателя события "submit" на форму
 refs.form.addEventListener('submit', e => {
   submitForm(e);
 });
 
+// Функция для обработки отправки формы
 function submitForm(event) {
   event.preventDefault();
   animationLoader();
   page = 1; // Обнуление страницы при новом запросе
   currentValue = refs.form.elements.searchQuery.value.trim();
 
+  // Вызов функции fetchData для получения данных
   fetchData()
     .then(data => {
       if (data.data.hits.length === 0) {
@@ -31,16 +34,13 @@ function submitForm(event) {
         );
       }
       refs.gallery.innerHTML = renderListImage(data.data.hits);
-        initializeLightbox()
-        
-        
+      initializeLightbox();
     })
     .catch(console.log)
     .finally(() => animationLoaderFinaly());
 }
 
-
-//Запрос для скролла
+// Запрос для скролла
 async function fetcLoadMore() {
   const options = {
     params: {
@@ -54,42 +54,48 @@ async function fetcLoadMore() {
     },
   };
 
-    const response = await axios.get(BASE_URL, options);
-    
+  const response = await axios.get(BASE_URL, options);
+
   return response;
 }
 
-// функция для вызова библиотеки
+// Функция для инициализации библиотеки SimpleLightbox
 function initializeLightbox() {
   const lightbox = new SimpleLightbox('.gallery a');
 }
 
+// Настройки для Intersection Observer
 const options = {
   root: null,
   rootMargin: '300px',
   treshold: 0,
 };
 
+// Создание экземпляра Intersection Observer
 const observer = new IntersectionObserver(() => {
   page += 1;
-    animationLoader();
+  animationLoader();
 
-    fetcLoadMore().then(data => {
-      renderMoreImage(data)
-    }).catch(() => {
-        Notify.failure("Ошибка загрузки")
-    }).finally(() => animationLoaderFinaly());
+  // Вызов функции fetcLoadMore для загрузки дополнительных изображений
+  fetcLoadMore()
+    .then(data => {
+      renderMoreImage(data);
+    })
+    .catch(() => {
+      Notify.failure('Ошибка загрузки');
+    })
+    .finally(() => animationLoaderFinaly());
 }, options);
 
+// Начало наблюдения за элементом с id "jsGuard"
 observer.observe(refs.jsGuard);
 
-
+// Функция для отображения дополнительных изображений
 function renderMoreImage(data) {
-    refs.gallery.insertAdjacentHTML(
-      'beforeend',
-      renderListImage(data.data.hits)
-        );
-        
-        initializeLightbox()
-}
+  refs.gallery.insertAdjacentHTML(
+    'beforeend',
+    renderListImage(data.data.hits)
+  );
 
+  initializeLightbox();
+}
