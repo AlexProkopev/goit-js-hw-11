@@ -10,12 +10,40 @@ import SimpleLightbox from 'simplelightbox';
 // Дополнительный импорт стилей
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-export let currentValue = '';
+export let currentValue = null;
 let page = 0;
+
+
+// Настройки для Intersection Observer
+const options = {
+  root: null,
+  rootMargin: '300px',
+  treshold: 0,
+};
+
+// Создание экземпляра Intersection Observer
+const observer = new IntersectionObserver(() => {
+  page += 1;
+  animationLoader();
+
+  // Вызов функции fetcLoadMore для загрузки дополнительных изображений
+  fetcLoadMore()
+    .then(data => {
+      renderMoreImage(data);
+    })
+    .catch(() => {
+      Notify.failure('Ошибка загрузки');
+    })
+    .finally(() => animationLoaderFinaly());
+}, options);
 
 // Добавление слушателя события "submit" на форму
 refs.form.addEventListener('submit', e => {
-  submitForm(e);
+    e.preventDefault()
+    submitForm(e);
+
+    // Начало наблюдения за элементом с id "jsGuard"
+observer.observe(refs.jsGuard);
 });
 
 // Функция для обработки отправки формы
@@ -64,31 +92,11 @@ function initializeLightbox() {
   const lightbox = new SimpleLightbox('.gallery a');
 }
 
-// Настройки для Intersection Observer
-const options = {
-  root: null,
-  rootMargin: '300px',
-  treshold: 0,
-};
 
-// Создание экземпляра Intersection Observer
-const observer = new IntersectionObserver(() => {
-  page += 1;
-  animationLoader();
 
-  // Вызов функции fetcLoadMore для загрузки дополнительных изображений
-  fetcLoadMore()
-    .then(data => {
-      renderMoreImage(data);
-    })
-    .catch(() => {
-      Notify.failure('Ошибка загрузки');
-    })
-    .finally(() => animationLoaderFinaly());
-}, options);
 
-// Начало наблюдения за элементом с id "jsGuard"
-observer.observe(refs.jsGuard);
+
+
 
 // Функция для отображения дополнительных изображений
 function renderMoreImage(data) {
