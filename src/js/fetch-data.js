@@ -2,7 +2,7 @@
 import { BASE_URL,key } from "./http";
 import axios from "axios";
 import { currentValue } from "./index";
-import { page } from "./index";
+
 
 
 
@@ -17,7 +17,7 @@ export async function fetchData() {
       image_type: "photo",
       orientation: "horizontal",
       safesearch: true,
-      page: page,
+      page: 1,
       per_page: 40
     }
   }
