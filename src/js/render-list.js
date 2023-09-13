@@ -1,4 +1,4 @@
-import { refs } from "./refs"
+
 
 export function renderListImage(data) {
      
