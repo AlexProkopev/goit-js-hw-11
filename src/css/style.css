@@ -24,6 +24,7 @@ body {
 }
 
 .input-search {
+  padding-left: 10px;
   height: 40px;
   width: 500px;
   border: none;

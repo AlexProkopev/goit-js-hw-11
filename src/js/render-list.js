@@ -1,9 +1,7 @@
-
-
 export function renderListImage(data) {
-     
-   const renderList =  data.map(el => {
-       return `<a href="${el.largeImageURL}" class="link-img">
+  const renderList = data
+    .map(el => {
+      return `<a href="${el.largeImageURL}" class="link-img">
        <div class="photo-card">
   <img src="${el.webformatURL}" alt="${el.tags}" loading="lazy" />
   <div class="info">
@@ -21,8 +19,9 @@ export function renderListImage(data) {
     </p>
   </div>
 </div> 
-       </a>`
-    }).join("")
+       </a>`;
+    })
+    .join('');
 
-    return renderList
+  return renderList;
 }
