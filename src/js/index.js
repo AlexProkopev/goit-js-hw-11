@@ -49,7 +49,7 @@ function performSearch() {
           Notify.failure(
             'Sorry, there are no images matching your search query. Please try again.'
           );
-        }
+       }
 
         refs.gallery.insertAdjacentHTML(
           'beforeend',
@@ -95,7 +95,8 @@ function loadMoreData(entries) {
           //Проверка дошел ли пользователь до конца
           num += data.data.hits.length 
           if (num === data.data.totalHits) {
-             Notify.failure('Больше изображений нет');
+            Notify.failure('Больше изображений нет');
+            return
           }
         })
         .catch(() => Notify.failure('Error fetching more data'))
