@@ -10,11 +10,17 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 
 let currentValue = null;
 let page = 1;
+let num = 0
+let isLoading = false;
 
 refs.form.addEventListener('submit', searchImage);
 
 // Создание экземпляра Intersection Observer
-const observer = new IntersectionObserver(loadMoreData, { threshold: 0 });
+const observer = new IntersectionObserver(loadMoreData, {
+  // root: null,
+  // rootMargin: "10px",
+  threshold: 0
+});
 
 function searchImage(event) {
   event.preventDefault();
@@ -28,7 +34,8 @@ function searchImage(event) {
     Notify.failure('Запрос не может быть пустым');
     animationLoaderFinaly();
   } else {
-   performSearch()
+    performSearch()
+    
   }
 }
 
@@ -36,7 +43,8 @@ function searchImage(event) {
 function performSearch() {
   
    fetchData(currentValue, page)
-      .then(data => {
+     .then(data => {
+        Notify.success(`Hooray! We found ${data.data.totalHits} images.`)
         if (data.data.hits.length === 0) {
           Notify.failure(
             'Sorry, there are no images matching your search query. Please try again.'
@@ -64,9 +72,8 @@ function initializeLightbox() {
   const lightbox = new SimpleLightbox('.gallery a');
 }
 
+// Функция для загрузки изображений обсервера
 
-
-let isLoading = false;
 function loadMoreData(entries) {
   if (isLoading) return; // проверка что если уже выполняется загрузка, не запускаем ещё одну
 
@@ -85,8 +92,10 @@ function loadMoreData(entries) {
 
           initializeLightbox();
 
-          if (data.totalHits === page) {
-            Notify.failure('Больше изображений нет');
+          //Проверка дошел ли пользователь до конца
+          num += data.data.hits.length 
+          if (num === data.data.totalHits) {
+             Notify.failure('Больше изображений нет');
           }
         })
         .catch(() => Notify.failure('Error fetching more data'))
@@ -96,6 +105,7 @@ function loadMoreData(entries) {
         });
     }
   });
+  
 }
 
 
