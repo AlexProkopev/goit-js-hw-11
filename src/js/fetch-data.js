@@ -16,7 +16,11 @@ export async function fetchData(value,page) {
   };
 
   
+  try {
     const response = await axios.get(BASE_URL, options);
-    return response
+    return response.data
+  } catch (error) {
+    throw new Error("Произошла ошибка")
+  }
   
 }

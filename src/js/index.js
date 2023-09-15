@@ -8,25 +8,31 @@ import SimpleLightbox from 'simplelightbox';
 // Дополнительный импорт стилей
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-let currentValue = null;
-let page = 1;
-let num = 0
-let isLoading = false;
+// Объявление переменных
+let currentValue = null; // Значение текущего поискового запроса
+let page = 1; // Текущая страница результатов
+let num = 0; // Количество загруженных изображений
+let isLoading = false; // Флаг, указывающий, выполняется ли загрузка
+let lastPage = 0; // Последняя страница результатов
+let currentPage = 0; // Текущая страница результатов
 
+// Обработчик события отправки формы поиска
 refs.form.addEventListener('submit', searchImage);
 
-// Создание экземпляра Intersection Observer
+// Создание экземпляра Intersection Observer для бесконечной загрузки
 const observer = new IntersectionObserver(loadMoreData, {
-  // root: null,
-  // rootMargin: "10px",
-  threshold: 0
+  root: null, // Наблюдение в пределах всего видимого окна
+  rootMargin: '10px', // Дополнительные отступы вокруг корня
+  threshold: 0, // Порог наблюдения
 });
 
+// Функция для обработки события отправки формы поиска
 function searchImage(event) {
   event.preventDefault();
-  page = 1;
-  refs.gallery.innerHTML = '';
+  refs.gallery.innerHTML = ''; // Очистка галереи перед новым запросом
   animationLoader();
+
+  page = 1; // Обнуление номера страницы перед новым запросом
 
   currentValue = refs.form.elements.searchQuery.value.trim();
 
@@ -34,80 +40,92 @@ function searchImage(event) {
     Notify.failure('Запрос не может быть пустым');
     animationLoaderFinaly();
   } else {
-    performSearch()
-    
+    fetchAndRenderImages(); // Запуск функции загрузки и отображения изображений
   }
-}
-
-//Поиск и рендер по прокрутке
-function performSearch() {
-  
-   fetchData(currentValue, page)
-     .then(data => {
-        Notify.success(`Hooray! We found ${data.data.totalHits} images.`)
-        if (data.data.hits.length === 0) {
-          Notify.failure(
-            'Sorry, there are no images matching your search query. Please try again.'
-          );
-       }
-
-        refs.gallery.insertAdjacentHTML(
-          'beforeend',
-          renderListImage(data.data.hits)
-        );
-
-        initializeLightbox();
-      })
-      .catch(() =>
-        Notify.failure(`We're sorry, but you've reached the end of search results.`)
-      )
-      .finally(() => {
-        animationLoaderFinaly();
-        observer.observe(refs.jsGuard);
-      });
 }
 
 // Функция для инициализации библиотеки SimpleLightbox
 function initializeLightbox() {
-  const lightbox = new SimpleLightbox('.gallery a');
+  const lightbox = new SimpleLightbox('.gallery a'); // Инициализация лайтбокса для изображений
 }
 
-// Функция для загрузки изображений обсервера
-
+// Функция для загрузки дополнительных изображений при прокрутке
 function loadMoreData(entries) {
-  if (isLoading) return; // проверка что если уже выполняется загрузка, не запускаем ещё одну
+  if (isLoading) return; // Если уже выполняется загрузка, прекращаем выполнение
 
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       isLoading = true;
-      page += 1;
+      page += 1; // Увеличение номера страницы для загрузки следующей порции изображений
       animationLoader();
-
-      fetchData(currentValue, page)
-        .then(data => {
-          refs.gallery.insertAdjacentHTML(
-            'beforeend',
-            renderListImage(data.data.hits)
-          );
-
-          initializeLightbox();
-
-          //Проверка дошел ли пользователь до конца
-          num += data.data.hits.length 
-          if (num === data.data.totalHits) {
-            Notify.failure('Больше изображений нет');
-            return
-          }
-        })
-        .catch(() => Notify.failure('Error fetching more data'))
-        .finally(() => {
-          animationLoaderFinaly();
-          isLoading = false;
-        });
+      fetchAndRenderMoreImages(); // Загрузка и отображение дополнительных изображений
     }
   });
-  
 }
 
+// Функция для загрузки и отображения дополнительных изображений
+async function fetchAndRenderMoreImages() {
+  try {
+    const data = await fetchData(currentValue, page); // Запрос данных с сервера
 
+    refs.gallery.insertAdjacentHTML('beforeend', renderListImage(data.hits)); // Отображение полученных изображений
 
+    initializeLightbox(); // Инициализация лайтбокса для новых изображений
+
+    num += data.hits.length; // Увеличение счетчика загруженных изображений
+
+    lastPage = Math.ceil(data.totalHits / 40); // Вычисление последней страницы результатов
+    currentPage = Math.ceil(num / 40); // Вычисление текущей страницы результатов
+    console.log(lastPage);
+    console.log(currentPage);
+
+    if (currentPage === lastPage) {
+      observer.unobserve(refs.jsGuard); // Отключение бесконечной загрузки, если достигнут конец результатов
+      animationLoaderFinaly();
+      Notify.failure('Была загружена последняя страница');
+    }
+
+    animationLoaderFinaly();
+    isLoading = false;
+  } catch (error) {
+    Notify.failure('Oops erore'); // Обработка ошибки при загрузке данных
+  }
+}
+
+// Функция для загрузки и отображения изображений при отправке формы
+async function fetchAndRenderImages() {
+  try {
+    const data = await fetchData(currentValue, page); // Запрос данных с сервера
+    Notify.success(`Hooray! We found ${data.totalHits} images.`); // Уведомление об успешной загрузке
+
+    observer.observe(refs.jsGuard); // Начало наблюдения за бесконечной загрузкой
+
+    if (data.hits.length === 0) {
+      Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      ); // Уведомление о отсутствии результатов
+
+      animationLoaderFinaly();
+    }
+
+    refs.gallery.insertAdjacentHTML('beforeend', renderListImage(data.hits)); // Отображение полученных изображений
+
+    initializeLightbox(); // Инициализация лайтбокса для изображений
+
+    animationLoaderFinaly();
+
+    num += data.hits.length; // Увеличение счетчика загруженных изображений
+
+    if (data.totalHits < 40) {
+      observer.unobserve(refs.jsGuard); // Отключение бесконечной загрузки, если общее количество изображений меньше 40
+      return;
+    } else if (num === data.totalHits) {
+      observer.unobserve(refs.jsGuard); // Отключение бесконечной загрузки, если загружено все доступное количество изображений
+      animationLoaderFinaly();
+      return;
+    }
+  } catch (error) {
+    Notify.failure('Произошла ошибка на сервере, попробуйте позже'); // Обработка ошибки при загрузке данных
+    animationLoaderFinaly();
+  }
+}
