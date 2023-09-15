@@ -22,22 +22,27 @@ refs.form.addEventListener('submit', searchImage);
 // Создание экземпляра Intersection Observer для бесконечной загрузки
 const observer = new IntersectionObserver(loadMoreData, {
   root: null, // Наблюдение в пределах всего видимого окна
-  rootMargin: '10px', // Дополнительные отступы вокруг корня
-  threshold: 0, // Порог наблюдения
+  rootMargin: '200px', // Дополнительные отступы вокруг корня
+  threshold: 1, // Порог наблюдения
 });
 
 // Функция для обработки события отправки формы поиска
 function searchImage(event) {
   event.preventDefault();
+
+   // Прекращение наблюдения через Intersection Observer перед новым поиском
+  observer.unobserve(refs.jsGuard);
+
+  num = 0
   refs.gallery.innerHTML = ''; // Очистка галереи перед новым запросом
   animationLoader();
-
+  
   page = 1; // Обнуление номера страницы перед новым запросом
 
   currentValue = refs.form.elements.searchQuery.value.trim();
 
   if (currentValue === '') {
-    Notify.failure('Запрос не может быть пустым');
+    Notify.failure('Request cannot be empty');
     animationLoaderFinaly();
   } else {
     fetchAndRenderImages(); // Запуск функции загрузки и отображения изображений
@@ -82,11 +87,12 @@ async function fetchAndRenderMoreImages() {
     if (currentPage === lastPage) {
       observer.unobserve(refs.jsGuard); // Отключение бесконечной загрузки, если достигнут конец результатов
       animationLoaderFinaly();
-      Notify.failure('Была загружена последняя страница');
+      Notify.failure('The last page has been loaded');
     }
 
     animationLoaderFinaly();
     isLoading = false;
+    smoothScrollToNextGroup()
   } catch (error) {
     Notify.failure('Oops erore'); // Обработка ошибки при загрузке данных
   }
@@ -125,7 +131,19 @@ async function fetchAndRenderImages() {
       return;
     }
   } catch (error) {
-    Notify.failure('Произошла ошибка на сервере, попробуйте позже'); // Обработка ошибки при загрузке данных
+    Notify.failure('An error occurred on the server, please try later'); // Обработка ошибки при загрузке данных
     animationLoaderFinaly();
   }
+}
+
+
+function smoothScrollToNextGroup() {
+  const { height: cardHeight } = document
+    .querySelector(".gallery")
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: "smooth",
+  });
 }
