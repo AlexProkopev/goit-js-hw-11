@@ -81,8 +81,6 @@ async function fetchAndRenderMoreImages() {
 
     lastPage = Math.ceil(data.totalHits / 40); // Вычисление последней страницы результатов
     currentPage = Math.ceil(num / 40); // Вычисление текущей страницы результатов
-    console.log(lastPage);
-    console.log(currentPage);
 
     if (currentPage === lastPage) {
       observer.unobserve(refs.jsGuard); // Отключение бесконечной загрузки, если достигнут конец результатов
